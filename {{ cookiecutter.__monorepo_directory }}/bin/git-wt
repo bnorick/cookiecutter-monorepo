@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+DEBUG=${DEBUG:-}
+if [[ ! -z $DEBUG ]]; then
+    PS4='+($(basename ${BASH_SOURCE}):${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+    export MISE_LOG_LEVEL=${MISE_LOG_LEVEL:-trace}
+    set -x
+fi
+
+exec uv tool run https://github.com/bnorick/git-wt.git "$@"

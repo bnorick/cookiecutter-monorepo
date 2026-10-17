@@ -1,0 +1,10 @@
+{% raw -%}
+[tools]
+uv = "latest"
+fd = "latest"
+rg = "latest"
+jq = "latest"
+
+[env]
+_.source = "{{ config_root }}/bin/activate"
+{% endraw -%}

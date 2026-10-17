@@ -1,0 +1,11 @@
+{
+  "monorepo_name": "Cookiecutter Monorepo",
+  "monorepo_short_description": "TODO: write me",
+  "annex_ignore": true,
+  "open_source_license": ["None", "MIT", "BSD-3-Clause", "ISC", "Apache-2.0", "GPL-3.0-only"],
+  "__monorepo_directory": "{{ cookiecutter.monorepo_name.lower().replace(' ', '-') }}",
+  "__env_var_prefix": "{{ cookiecutter.monorepo_name.replace(' ', '-').replace('-', '_').upper() }}",
+  "_copy_without_render": [
+    "tools/git-wt"
+  ]
+}

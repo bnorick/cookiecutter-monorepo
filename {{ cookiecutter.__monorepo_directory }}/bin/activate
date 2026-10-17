@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+__{{ cookiecutter.__env_var_prefix.lower() }}_activate() {
+    local bare_root
+    local git_dir
+    local worktree_root
+    local worktree_parent
+
+    worktree_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)" || return 1
+
+    export {{ cookiecutter.__env_var_prefix }}_ROOT="${worktree_root}"
+    
+    if [[ -d "${worktree_root}/.git" ]]; then
+        export {{ cookiecutter.__env_var_prefix }}_WORKTREE_LAYOUT=0
+        export {{ cookiecutter.__env_var_prefix }}_REPO_ROOT="${worktree_root}"
+        export PATH="{% raw %}${{% endraw %}{{ cookiecutter.__env_var_prefix }}_REPO_ROOT}/bin:${PATH}"
+        return 0
+    fi
+
+    git_dir="$(git --git-dir="${worktree_root}/.git" rev-parse --git-dir 2>/dev/null)" || return 1
+
+    for worktree_parent in "${worktree_root}/.." "${worktree_root}/../.."; do
+        if ! bare_root="$(cd -- "${worktree_parent}" 2>/dev/null && pwd -P)/.bare"; then
+            continue
+        fi
+
+        if [[ -d "${bare_root}" ]] && [[ "${git_dir}" == "${bare_root}/worktrees/"* ]]; then
+            export {{ cookiecutter.__env_var_prefix }}_WORKTREE_LAYOUT=1
+            export {{ cookiecutter.__env_var_prefix }}_REPO_ROOT="$(dirname -- "${bare_root}")"
+            export PATH="{% raw %}${{% endraw %}{{ cookiecutter.__env_var_prefix }}_ROOT}/bin:${PATH}"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+__{{ cookiecutter.__env_var_prefix.lower() }}_activate

@@ -1,0 +1,13 @@
+{% raw -%}
+#!/usr/bin/env -S uvx --from=rust-just just --justfile
+
+root_dir := justfile_directory()
+just := "just --justfile " + justfile()
+
+# List all supported project commands and their usage.
+default:
+    {{ just }} --list
+
+setup:
+    @bin/setup
+{% endraw -%}

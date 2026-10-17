@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+DEBUG=${DEBUG:-}
+if [[ ! -z $DEBUG ]]; then
+    PS4='+($(basename ${BASH_SOURCE}):${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+    export MISE_LOG_LEVEL=${MISE_LOG_LEVEL:-trace}
+    set -x
+fi
+
+config_content="$(cat <<'EOF'
+[env]
+MISE_TRUSTED_CONFIG_PATHS = "{{ "{{ config_root }}" }}"
+MISE_CEILING_PATHS = "${MISE_TRUSTED_CONFIG_PATHS}/.."
+{{ cookiecutter.__env_var_prefix }}_WORKTREE_LAYOUT = "1"
+{{ cookiecutter.__env_var_prefix }}_REPO_ROOT = "{{ "{{ config_root }}" }}"
+_.path = [
+    "main/bin"
+]
+EOF
+)"
+
+__{{ cookiecutter.__env_var_prefix.lower() }}_setup() {
+    local worktree_root
+    local managed_config
+    local backup_path
+    local backup_index
+
+    worktree_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)" || return 1
+    if [[ ! -f "${worktree_root}/bin/activate" ]]; then
+        return 1
+    fi
+
+    source "${worktree_root}/bin/activate"
+
+    # following setup only applies to worktree layout
+    if [[ "{% raw %}${{% endraw %}{{ cookiecutter.__env_var_prefix }}_WORKTREE_LAYOUT}" == "0" ]]; then
+        return 0
+    fi
+
+    managed_config="{% raw %}${{% endraw %}{{ cookiecutter.__env_var_prefix }}_REPO_ROOT}/mise.local.toml"
+    
+    # no-op if config already exists and matches
+    if [[ -e "${managed_config}" ]] && cmp -s "${managed_config}" <(printf '%s\n' "${config_content}"); then
+        return 0
+    fi
+
+    # backup any non-matching existing config
+    if [[ -e "${managed_config}" ]]; then
+        backup_path="${managed_config}.bak"
+        backup_index=0
+
+        while [[ -e "${backup_path}" ]]; do
+            backup_index=$((backup_index + 1))
+            backup_path="${managed_config}.bak.${backup_index}"
+        done
+
+        mv "${managed_config}" "${backup_path}"
+    fi
+
+    # write config
+    printf '%s\n' "${config_content}" > "${managed_config}"
+
+    printf '%s\n' "Wrote ${managed_config} ..."
+
+    return 0
+}
+
+__{{ cookiecutter.__env_var_prefix.lower() }}_setup
